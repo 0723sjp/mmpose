@@ -311,9 +311,9 @@ def main(args):
                     else:
                         wr.writerow([image])
 
-                    if onnx_pose_result != []:
+                    if onnx_pose_results != []:
                         row = [image]
-                        for i in onnx_pose_result[0]['keypoints']:
+                        for i in onnx_pose_results[0]['keypoints']:
                             row = [*row, *i.tolist()]
                         wr.writerow(row)
                     else:
