@@ -314,10 +314,8 @@ def main(args):
                         wr.writerow(row)
                     else:
                         wr.writerow([image])
-                    print(pose_results)
-                    print(onnx_pose_results)
-                    print("pose_results", pose_results.shape)
-                    print("onnx_pose_results", onnx_pose_results.shape)
+                    print(pose_results[0]['keypoints'].shape)
+                    print(onnx_pose_results[0]['keypoints'].shape)
                     # show the results
                     vis_img = vis_pose_result(
                         pose_model,
