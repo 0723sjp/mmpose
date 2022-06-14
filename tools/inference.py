@@ -37,7 +37,6 @@ def decode_heatmap(img_meta, output, test_cfg):
     all_preds = np.zeros((1, preds.shape[1], 3), dtype=np.float32)
     all_preds[:, :, 0:2] = preds[:, :, 0:2]
     all_preds[:, :, 2:3] = maxvals
-    print("all_preds", all_preds.shape)
     return all_preds[0]
 
 
@@ -140,6 +139,7 @@ def inference_top_down_pose_model_onnx(sess,
     pose_result['keypoints'] = pose
     pose_result['bbox'] = bboxes_xyxy[0]
     pose_results = [pose_result]
+    print(pose_results)
     return pose_results
 
 
