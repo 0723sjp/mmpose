@@ -262,7 +262,9 @@ def main(args):
                     start = time.time()
                     # test a single image, with a list of bboxes.
 
+                    print(mmdet_results_list[index][0]['bbox'])
                     pose = pose_estimator.inference(img, mmdet_results_list[index][0]['bbox'])
+                    sys.exit()
                     pose_result = mmdet_results_list[index][0].copy()
                     pose_result['keypoints'] = pose
                     pose_result['bbox'] = np.array(mmdet_results_list[index][0]['bbox'])
