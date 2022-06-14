@@ -63,7 +63,7 @@ def _inference_single_pose_model_onnx(sess,
         data['img'] = imgs_or_paths
     else:
         data['image_file'] = imgs_or_paths
-
+    print(data)
     data = test_pipeline(data)
     print(data)
 
