@@ -121,9 +121,9 @@ def _inference_single_pose_model_onnx(sess,
     # batch_data = collate(batch_data, samples_per_gpu=len(batch_data))
     # batch_data = scatter(batch_data, [device])[0]
 
-    print(data['img_metas'])
-    print(data['img_metas'].data)
-
+    img_meta = data['img_metas'].data
+    print(img_meta)
+    print(data['img'].shape)
     img_flipped = data['img'].flip(3)
     output_heatmap = sess.run(None, {onnx_input_key: data['img'].detach().numpy()})
     output_flipped_heatmap = sess.run(None, {onnx_input_key: img_flipped.detach().numpy()})
@@ -132,7 +132,7 @@ def _inference_single_pose_model_onnx(sess,
 
     print(output_heatmap.shape)
 
-    decode_heatmap(img_metas, output_heatmap)
+    decode_heatmap(img_meta, output_heatmap)
     keypoint_result = self.keypoint_head.decode(
         img_metas, output_heatmap, img_size=[img_width, img_height])
 
