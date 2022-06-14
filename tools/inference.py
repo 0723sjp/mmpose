@@ -98,7 +98,7 @@ def _inference_single_pose_model_onnx(sess,
     output_flipped_heatmap = sess.run(None, {onnx_input_key: img_flipped.detach().numpy()})
     output_heatmap = (output_heatmap[0] +
                       output_flipped_heatmap[0]) * 0.5
-
+    print("onnx output_heatmap", output_heatmap)
     return decode_heatmap(img_meta, output_heatmap, cfg)
 
 
