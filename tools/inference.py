@@ -252,7 +252,6 @@ def main(args):
                     else:
                         mmdet_results_list.append(dog_results)
                         wr2.writerow(row2)
-                    break
 
                 index = 0
                 len_img_list = len(img_list)
