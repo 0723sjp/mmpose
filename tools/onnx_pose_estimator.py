@@ -31,7 +31,7 @@ class OnnxPoseEstimator:
         net_feed_input = list(set(input_all) - set(input_initializer))
         assert len(net_feed_input) == 1
         self.sess = rt.InferenceSession(onnx_path, providers=['CPUExecutionProvider'])
-        print("loaded onnx model", type(onnx_model))
+        print("loaded onnx model")
         self.onnx_input_key = net_feed_input[0]
 
         self.flip_pairs = [[0, 1], [2, 3], [8, 9], [10, 11], [12, 13], [14, 15],

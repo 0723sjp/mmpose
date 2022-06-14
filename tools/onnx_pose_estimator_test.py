@@ -7,6 +7,7 @@ def main(args):
     img_path = "210930_1S_frame_3050.png"
     dog_bbox = [233.68967, 564.35767, 510.79337, 706.0123, 0.98687196]
     pose = pose_estimator.inference(img_path, dog_bbox)
+    print("result")
     print(pose)
 
 
