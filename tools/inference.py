@@ -14,6 +14,58 @@ import onnxruntime as rt
 import copy
 
 
+def decode_heatmap(img_metas, output):
+    batch_size = len(img_metas)
+
+    if 'bbox_id' in img_metas[0]:
+        bbox_ids = []
+    else:
+        bbox_ids = None
+
+    c = np.zeros((batch_size, 2), dtype=np.float32)
+    s = np.zeros((batch_size, 2), dtype=np.float32)
+    image_paths = []
+    score = np.ones(batch_size)
+    for i in range(batch_size):
+        c[i, :] = img_metas[i]['center']
+        s[i, :] = img_metas[i]['scale']
+        image_paths.append(img_metas[i]['image_file'])
+
+        if 'bbox_score' in img_metas[i]:
+            score[i] = np.array(img_metas[i]['bbox_score']).reshape(-1)
+        if bbox_ids is not None:
+            bbox_ids.append(img_metas[i]['bbox_id'])
+
+    preds, maxvals = keypoints_from_heatmaps(
+        output,
+        c,
+        s,
+        unbiased=self.test_cfg.get('unbiased_decoding', False),
+        post_process=self.test_cfg.get('post_process', 'default'),
+        kernel=self.test_cfg.get('modulate_kernel', 11),
+        valid_radius_factor=self.test_cfg.get('valid_radius_factor',
+                                              0.0546875),
+        use_udp=self.test_cfg.get('use_udp', False),
+        target_type=self.test_cfg.get('target_type', 'GaussianHeatmap'))
+
+    all_preds = np.zeros((batch_size, preds.shape[1], 3), dtype=np.float32)
+    all_boxes = np.zeros((batch_size, 6), dtype=np.float32)
+    all_preds[:, :, 0:2] = preds[:, :, 0:2]
+    all_preds[:, :, 2:3] = maxvals
+    all_boxes[:, 0:2] = c[:, 0:2]
+    all_boxes[:, 2:4] = s[:, 0:2]
+    all_boxes[:, 4] = np.prod(s * 200.0, axis=1)
+    all_boxes[:, 5] = score
+
+    result = {}
+
+    result['preds'] = all_preds
+    result['boxes'] = all_boxes
+    result['image_paths'] = image_paths
+    result['bbox_ids'] = bbox_ids
+
+    return result
+
 def _inference_single_pose_model_onnx(sess,
                                       onnx_input_key,
                                       imgs_or_paths,
@@ -63,9 +115,19 @@ def _inference_single_pose_model_onnx(sess,
         data['img'] = imgs_or_paths
     else:
         data['image_file'] = imgs_or_paths
-    print(data)
     data = test_pipeline(data)
-    print(data)
+    print(data['img_metas'])
+    print(data['img_metas'][0])
+
+    img_flipped = data['img'].flip(3)
+    output_heatmap = sess.run(None, {onnx_input_key: data['img'].detach().numpy()})
+    output_flipped_heatmap = sess.run(None, {onnx_input_key: img_flipped.detach().numpy()})
+    output_heatmap = (output_heatmap +
+                      output_flipped_heatmap) * 0.5
+
+    decode_heatmap(img_metas, output_heatmap)
+    keypoint_result = self.keypoint_head.decode(
+        img_metas, output_heatmap, img_size=[img_width, img_height])
 
 
 #     batch_data.append(data)
