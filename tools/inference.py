@@ -4,6 +4,7 @@ import os, time, csv, time, shutil
 from mmpose.apis import (inference_top_down_pose_model, init_pose_model,
                          vis_pose_result, process_mmdet_results)
 from mmdet.apis import inference_detector, init_detector
+from mmcv.parallel import collate, scatter
 import mmcv
 import numpy as np
 from mmpose.core.bbox import bbox_xywh2xyxy, bbox_xyxy2xywh
@@ -116,14 +117,20 @@ def _inference_single_pose_model_onnx(sess,
     else:
         data['image_file'] = imgs_or_paths
     data = test_pipeline(data)
+    # batch_data = [data]
+    # batch_data = collate(batch_data, samples_per_gpu=len(batch_data))
+    # batch_data = scatter(batch_data, [device])[0]
+
     print(data['img_metas'])
-    print(data['img_metas'][0])
+    print(data['img_metas'].data)
 
     img_flipped = data['img'].flip(3)
     output_heatmap = sess.run(None, {onnx_input_key: data['img'].detach().numpy()})
     output_flipped_heatmap = sess.run(None, {onnx_input_key: img_flipped.detach().numpy()})
     output_heatmap = (output_heatmap +
                       output_flipped_heatmap) * 0.5
+
+    print(output_heatmap.shape)
 
     decode_heatmap(img_metas, output_heatmap)
     keypoint_result = self.keypoint_head.decode(
