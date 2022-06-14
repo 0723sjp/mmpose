@@ -105,9 +105,8 @@ class OnnxPoseEstimator:
         img = data['img'].unsqueeze(0)
         output_heatmap = self.sess.run(None, {self.onnx_input_key: img.detach().numpy()})
         output_heatmap = output_heatmap[0]
-        print("output_heatmap", output_heatmap.shape)
-        output_heatmap = np.array([output_heatmap[0]])
         flip_output_heatmap = np.array([output_heatmap[1]])
+        output_heatmap = np.array([output_heatmap[0]])
 
         flip_output_heatmap = flip_back(
             flip_output_heatmap,
