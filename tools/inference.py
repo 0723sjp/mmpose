@@ -149,7 +149,7 @@ def inference_top_down_pose_model_onnx(sess,
     poses = _inference_single_pose_model_onnx(sess,
                                               onnx_input_key,
                                               imgs_or_paths,
-                                              bboxes_xywh,
+                                              bboxes_xywh[0],
                                               dataset=dataset,
                                               cfg=cfg)
 
