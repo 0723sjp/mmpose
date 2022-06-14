@@ -1,13 +1,13 @@
 import cv2
 import argparse
 import os, csv, time, shutil
-from mmpose.apis import (init_pose_model,
+from mmpose.apis import (inference_top_down_pose_model, init_pose_model,
                          vis_pose_result, process_mmdet_results)
 from mmdet.apis import inference_detector, init_detector
-from mmcv.parallel import collate, scatter
+from mmpose.core.post_processing import flip_back
 import mmcv
 import numpy as np
-from mmpose.core.bbox import bbox_xywh2xyxy, bbox_xyxy2xywh
+from mmpose.core.bbox import bbox_xyxy2xywh
 from mmpose.datasets.pipelines import Compose
 from mmpose.core.evaluation.top_down_eval import keypoints_from_heatmaps
 
@@ -105,6 +105,18 @@ class OnnxPoseEstimator:
         img = data['img'].unsqueeze(0)
         output_heatmap = self.sess.run(None, {self.onnx_input_key: img.detach().numpy()})
         output_heatmap = output_heatmap[0]
+        output_heatmap = np.array([output_heatmap[0]])
+        flip_output_heatmap = np.array([output_heatmap[1]])
+
+        flip_output_heatmap = flip_back(
+            flip_output_heatmap,
+            self.flip_pairs,
+            target_type=self.cfg.get('target_type', 'GaussianHeatmap'))
+        # feature is not aligned, shift flipped heatmap for higher accuracy
+        if self.cfg.get('shift_heatmap', False):
+            flip_output_heatmap[:, :, :, 1:] = flip_output_heatmap[:, :, :, :-1]
+
+        output_heatmap = (output_heatmap + flip_output_heatmap) * 0.5
 
         return self.decode_heatmap(img_meta, output_heatmap)
 
@@ -134,7 +146,8 @@ class OnnxPoseEstimator:
 
 def main(args):
     # saved csv only folder path of inference images (same data in args.result_dir)
-    result_csv_folder = args.result_dir + '_csvOnly'
+    result_csv_folder = args.result_dir + '_csv_only'
+    onnx_result_csv_folder = args.result_dir + '_csv_only_onnx'
 
     gpu_device = 'cuda'
 
@@ -146,6 +159,7 @@ def main(args):
 
     os.makedirs(args.result_dir, exist_ok=True)
     os.makedirs(result_csv_folder, exist_ok=True)
+    os.makedirs(onnx_result_csv_folder, exist_ok=True)
 
     scorer_index = ['scorer'] + (['teamDLC'] * 60)
 
@@ -173,6 +187,7 @@ def main(args):
 
         os.makedirs(args.result_dir + '/' + folder, exist_ok=True)
         os.makedirs(result_csv_folder + '/' + folder, exist_ok=True)
+        os.makedirs(onnx_result_csv_folder + '/' + folder, exist_ok=True)
 
         for folder2 in os.listdir(args.image_root + '/' + folder):
             if folder2[0] == '.' or folder2[-1] == 's' or folder[-4:] == '.zip':  # skip strange folder
@@ -181,11 +196,14 @@ def main(args):
             print('==', folder, "/", folder2)
             os.makedirs(args.result_dir + '/' + folder + '/' + folder2, exist_ok=True)
             os.makedirs(result_csv_folder + '/' + folder + '/' + folder2, exist_ok=True)
+            os.makedirs(onnx_result_csv_folder + '/' + folder + '/' + folder2, exist_ok=True)
 
             with open(args.result_dir + '/' + folder + '/' + folder2 + '/vis_' + folder2 + '.csv', 'w',
-                      newline='') as w, open(
-                args.result_dir + '/' + folder + '/' + folder2 + '/bbox_' + folder2 + '.csv',
-                'w', newline='') as w2:
+                      newline='') as w, \
+                    open(args.result_dir + '/' + folder + '/' + folder2 + '/bbox_' + folder2 + '.csv', 'w',
+                         newline='') as w2, \
+                    open(args.result_dir + '/' + folder + '/' + folder2 + '/vis_onnx_' + folder2 + '.csv', 'w',
+                         newline='') as onnx_w:
                 wr = csv.writer(w)
                 wr.writerow(scorer_index)
                 wr.writerow(bodyparts_index)
@@ -194,6 +212,11 @@ def main(args):
                 wr2 = csv.writer(w2)
                 wr2.writerow(bodyparts_index2)
                 wr2.writerow(coords_index2)
+
+                onnx_wr = csv.writer(onnx_w)
+                onnx_wr.writerow(scorer_index)
+                onnx_wr.writerow(bodyparts_index)
+                onnx_wr.writerow(coords_index)
 
                 img_list = os.listdir(args.image_root + '/' + folder + '/' + folder2)
                 img_list.sort()
@@ -261,14 +284,21 @@ def main(args):
 
                     start = time.time()
                     # test a single image, with a list of bboxes.
+                    pose_results, returned_outputs = inference_top_down_pose_model(
+                        pose_model,
+                        img,
+                        mmdet_results_list[index],
+                        bbox_thr=0.01,
+                        format='xyxy',
+                        dataset=pose_model.cfg.data.test.type,
+                        return_heatmap=False,
+                        outputs=None)
 
-                    print(mmdet_results_list[index][0]['bbox'])
                     pose = pose_estimator.inference(img, mmdet_results_list[index][0]['bbox'])
-                    sys.exit()
-                    pose_result = mmdet_results_list[index][0].copy()
-                    pose_result['keypoints'] = pose
-                    pose_result['bbox'] = np.array(mmdet_results_list[index][0]['bbox'])
-                    pose_results = [pose_result]
+                    onnx_pose_result = mmdet_results_list[index][0].copy()
+                    onnx_pose_result['keypoints'] = pose
+                    onnx_pose_result['bbox'] = np.array(mmdet_results_list[index][0]['bbox'])
+                    onnx_pose_results = [onnx_pose_result]
 
                     time_pe.append(time.time() - start)
                     #                 print('-PE',image, ':', time_pe[-1])
@@ -281,20 +311,41 @@ def main(args):
                         wr.writerow(row)
                     else:
                         wr.writerow([image])
-                    # show the results
-                    vis_img = vis_pose_result(
-                        pose_model,
-                        img,
-                        pose_results,
-                        kpt_score_thr=0.01,
-                        dataset=pose_model.cfg.data.test.type,
-                        show=False)
 
+                    if onnx_pose_result != []:
+                        row = [image]
+                        for i in onnx_pose_result[0]['keypoints']:
+                            row = [*row, *i.tolist()]
+                        wr.writerow(row)
+                    else:
+                        wr.writerow([image])
+                    # show the results
+                    if args.visualize:
+                        vis_img = vis_pose_result(
+                            pose_model,
+                            img,
+                            pose_results,
+                            kpt_score_thr=0.01,
+                            dataset=pose_model.cfg.data.test.type,
+                            show=False)
+
+                        onnx_vis_img = vis_pose_result(
+                            pose_model,
+                            img,
+                            onnx_pose_results,
+                            kpt_score_thr=0.01,
+                            dataset=pose_model.cfg.data.test.type,
+                            show=False)
+
+                        cv2.imwrite(args.result_dir + '/' + folder + '/' + folder2 + '/vis_' + image, vis_img)
+                        cv2.imwrite(args.result_dir + '/' + folder + '/' + folder2 + '/vis_onnx_' + image, onnx_vis_img)
                     index += 1
-                    cv2.imwrite(args.result_dir + '/' + folder + '/' + folder2 + '/vis_' + image, vis_img)
 
             shutil.copy(args.result_dir + '/' + folder + '/' + folder2 + '/vis_' + folder2 + '.csv',
                         result_csv_folder + '/' + folder + '/' + folder2 + '/CollectedData_teamDLC.csv')
+
+            shutil.copy(args.result_dir + '/' + folder + '/' + folder2 + '/vis_onnx_' + folder2 + '.csv',
+                        onnx_result_csv_folder + '/' + folder + '/' + folder2 + '/CollectedData_teamDLC.csv')
 
     # print(time_od, '\n')
     # print(time_pe, '\n')
@@ -315,6 +366,7 @@ def parse_args():
                         default='https://download.openmmlab.com/mmdetection/v2.0/faster_rcnn/faster_rcnn_r50_fpn_2x_coco/faster_rcnn_r50_fpn_2x_coco_bbox_mAP-0.384_20200504_210434-a5d8aa15.pth',
                         type=str)
     parser.add_argument('--det_config', default='./demo/mmdetection_cfg/faster_rcnn_r50_fpn_coco.py', type=str)
+    parser.add_argument('--visualize', default=False, action='store_true')
 
     args = parser.parse_args()
     return args
