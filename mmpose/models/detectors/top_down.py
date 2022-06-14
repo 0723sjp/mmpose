@@ -211,12 +211,24 @@ class TopDown(BasePose):
         Returns:
             Tensor: Output heatmaps.
         """
-        output = self.backbone(img)
+        features = self.backbone(img)
         if self.with_neck:
-            output = self.neck(output)
+            features = self.neck(features)
         if self.with_keypoint:
-            output = self.keypoint_head(output)
-        return output
+            output_heatmap = self.keypoint_head(features)
+
+        img_flipped = img.flip(3)
+        features_flipped = self.backbone(img_flipped)
+        if self.with_neck:
+            features_flipped = self.neck(features_flipped)
+        if self.with_keypoint:
+            output_flipped_heatmap = self.keypoint_head.inference_model(
+                features_flipped, [[0, 1], [2, 3], [8, 9], [10, 11], [12, 13], [14, 15],
+                           [16, 17], [18, 19]])
+            output_heatmap = (output_heatmap +
+                              output_flipped_heatmap) * 0.5
+
+        return output_heatmap
 
     @deprecated_api_warning({'pose_limb_color': 'pose_link_color'},
                             cls_name='TopDown')
