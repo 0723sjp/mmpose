@@ -11,6 +11,7 @@ from mmpose.core import imshow_bboxes, imshow_keypoints
 from .. import builder
 from ..builder import POSENETS
 from .base import BasePose
+import torch
 
 try:
     from mmcv.runner import auto_fp16
@@ -225,8 +226,7 @@ class TopDown(BasePose):
             output_flipped_heatmap = self.keypoint_head.inference_model(
                 features_flipped, [[0, 1], [2, 3], [8, 9], [10, 11], [12, 13], [14, 15],
                            [16, 17], [18, 19]])
-            output_heatmap = (output_heatmap +
-                              output_flipped_heatmap) * 0.5
+            output_heatmap = torch.mul(torch.add(output_heatmap, output_flipped_heatmap), 0.5)
 
         return output_heatmap
 
