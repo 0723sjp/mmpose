@@ -314,7 +314,8 @@ def main(args):
                         wr.writerow(row)
                     else:
                         wr.writerow([image])
-
+                    print(pose_results)
+                    print(onnx_pose_results)
                     print("pose_results", pose_results.shape)
                     print("onnx_pose_results", onnx_pose_results.shape)
                     # show the results
