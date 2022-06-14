@@ -125,7 +125,7 @@ def _inference_single_pose_model_onnx(sess,
     print(img_meta)
     print(data['img'].shape)
     print(data['img'])
-    img_flipped = data['img'].flip(3)
+    img_flipped = data['img'].flip(2)
     output_heatmap = sess.run(None, {onnx_input_key: data['img'].detach().numpy()})
     output_flipped_heatmap = sess.run(None, {onnx_input_key: img_flipped.detach().numpy()})
     output_heatmap = (output_heatmap +
