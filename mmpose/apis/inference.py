@@ -217,7 +217,6 @@ def _inference_single_pose_model(model,
         else:
             raise NotImplementedError()
         dataset_name = dataset
-    print('flip_pairs', flip_pairs)
 
     batch_data = []
     for bbox in bboxes:

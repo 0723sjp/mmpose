@@ -188,6 +188,7 @@ class TopDown(BasePose):
                     features_flipped, img_metas[0]['flip_pairs'])
                 output_heatmap = (output_heatmap +
                                   output_flipped_heatmap) * 0.5
+                print("output_heatmap", output_heatmap.shape)
 
         if self.with_keypoint:
             keypoint_result = self.keypoint_head.decode(

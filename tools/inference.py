@@ -100,6 +100,8 @@ def _inference_single_pose_model_onnx(sess,
     output_heatmap = (output_heatmap[0] +
                       output_flipped_heatmap[0]) * 0.5
 
+    print("output_flipped_heatmap shape", output_flipped_heatmap.shape)
+
     return decode_heatmap(img_meta, output_heatmap, cfg)
 
 
