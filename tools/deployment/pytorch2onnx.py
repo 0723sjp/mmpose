@@ -149,7 +149,9 @@ if __name__ == '__main__':
     model = _convert_batchnorm(model)
 
     # onnx.export does not support kwargs
-    if hasattr(model, 'forward_dummy'):
+    if hasattr(model, 'forward_dummy_with_flip'):
+        model.forward = model.forward_dummy_with_flip
+    elif hasattr(model, 'forward_dummy'):
         model.forward = model.forward_dummy
     else:
         raise NotImplementedError(

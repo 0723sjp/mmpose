@@ -212,6 +212,24 @@ class TopDown(BasePose):
         Returns:
             Tensor: Output heatmaps.
         """
+        output = self.backbone(img)
+        if self.with_neck:
+            output = self.neck(output)
+        if self.with_keypoint:
+            output = self.keypoint_head(output)
+        return output
+
+    def forward_dummy_with_flip(self, img):
+        """Used for computing network FLOPs.
+
+        See ``tools/get_flops.py``.
+
+        Args:
+            img (torch.Tensor): Input image.
+
+        Returns:
+            Tensor: Output heatmaps.
+        """
         features = self.backbone(img)
         if self.with_neck:
             features = self.neck(features)
@@ -223,12 +241,9 @@ class TopDown(BasePose):
         if self.with_neck:
             features_flipped = self.neck(features_flipped)
         if self.with_keypoint:
-            output_flipped_heatmap = self.keypoint_head.inference_model(
-                features_flipped, [[0, 1], [2, 3], [8, 9], [10, 11], [12, 13], [14, 15],
-                           [16, 17], [18, 19]])
-            output_heatmap = torch.mul(torch.add(output_heatmap, output_flipped_heatmap), 0.5)
+            output_flipped_heatmap = self.keypoint_head(features_flipped)
 
-        return output_heatmap
+        return torch.cat((output_heatmap, output_flipped_heatmap), 0)
 
     @deprecated_api_warning({'pose_limb_color': 'pose_link_color'},
                             cls_name='TopDown')
