@@ -314,6 +314,8 @@ def main(args):
                         wr.writerow(row)
                     else:
                         wr.writerow([image])
+                    print(pose_results[0]['keypoints'])
+                    print(onnx_pose_results[0]['keypoints'])
                     print(pose_results[0]['keypoints'].shape)
                     print(onnx_pose_results[0]['keypoints'].shape)
                     # show the results
