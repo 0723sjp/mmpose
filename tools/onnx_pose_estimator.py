@@ -265,7 +265,7 @@ def main(args):
                     pose = pose_estimator.inference(img, mmdet_results_list[index][0]['bbox'])
                     pose_result = mmdet_results_list[index][0].copy()
                     pose_result['keypoints'] = pose
-                    pose_result['bbox'] = np.array(mmdet_results_list[index][0])
+                    pose_result['bbox'] = np.array(mmdet_results_list[index][0]['bbox'])
                     pose_results = [pose_result]
                     print("pose_results", pose_results)
 
