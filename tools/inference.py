@@ -264,7 +264,7 @@ def main(args):
                 for image in img_list:
                     if image[-1] != 'g':
                         continue
-
+                    print(image)
                     img = args.image_root + '/' + folder + '/' + folder2 + '/' + image
 
                     # interpolate bbox value
