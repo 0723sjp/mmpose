@@ -267,7 +267,6 @@ def main(args):
                     pose_result['keypoints'] = pose
                     pose_result['bbox'] = np.array(mmdet_results_list[index][0]['bbox'])
                     pose_results = [pose_result]
-                    print("pose_results", pose_results)
 
                     time_pe.append(time.time() - start)
                     #                 print('-PE',image, ':', time_pe[-1])

@@ -315,7 +315,6 @@ def main(args):
                     else:
                         wr.writerow([image])
                     # show the results
-                    print("pose_results", pose_results)
                     vis_img = vis_pose_result(
                         pose_model,
                         img,
