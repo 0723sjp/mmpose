@@ -139,7 +139,6 @@ def inference_top_down_pose_model_onnx(sess,
     pose_result['keypoints'] = pose
     pose_result['bbox'] = bboxes_xyxy[0]
     pose_results = [pose_result]
-    print(pose_results)
     return pose_results
 
 
@@ -316,6 +315,8 @@ def main(args):
                     else:
                         wr.writerow([image])
 
+                    print("pose_results", pose_results.shape)
+                    print("onnx_pose_results", onnx_pose_results.shape)
                     # show the results
                     vis_img = vis_pose_result(
                         pose_model,
