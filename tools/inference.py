@@ -37,7 +37,7 @@ def decode_heatmap(img_meta, output, test_cfg):
     all_preds = np.zeros((1, preds.shape[1], 3), dtype=np.float32)
     all_preds[:, :, 0:2] = preds[:, :, 0:2]
     all_preds[:, :, 2:3] = maxvals
-
+    print("all_preds", all_preds.shape)
     return all_preds[0]
 
 
@@ -99,8 +99,6 @@ def _inference_single_pose_model_onnx(sess,
     output_flipped_heatmap = sess.run(None, {onnx_input_key: img_flipped.detach().numpy()})
     output_heatmap = (output_heatmap[0] +
                       output_flipped_heatmap[0]) * 0.5
-
-    print("output_flipped_heatmap shape", output_heatmap.shape)
 
     return decode_heatmap(img_meta, output_heatmap, cfg)
 
