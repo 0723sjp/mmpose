@@ -4,7 +4,7 @@ from onnx_pose_estimator import OnnxPoseEstimator
 
 def main(args):
     pose_estimator = OnnxPoseEstimator(pose_config=args.pose_config, onnx_path=args.onnx_path)
-    img_path = "210930_1S_frame_3050.png"
+    img_path = "sample_dog.png"
     dog_bbox = [233.68967, 564.35767, 510.79337, 706.0123, 0.98687196]
     pose = pose_estimator.inference(img_path, dog_bbox)
     print("result")
