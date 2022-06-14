@@ -83,6 +83,7 @@ def main(args):
     onnx_results = sess.run(None, {net_feed_input[0]: onnx_input})
     print("onnx result")
     print(onnx_results)
+    print(onnx_results[0].shape)
 
     onnx_total = 0.
     for i in range(args.test_cnt):
