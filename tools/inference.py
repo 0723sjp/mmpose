@@ -95,8 +95,8 @@ def _inference_single_pose_model_onnx(sess,
     img = data['img'].unsqueeze(0)
     output_heatmap = sess.run(None, {onnx_input_key: img.detach().numpy()})
     print("onnx output_heatmap")
-    print(output_heatmap)
-    return decode_heatmap(img_meta, output_heatmap, cfg)
+    print(output_heatmap[0])
+    return decode_heatmap(img_meta, output_heatmap[0], cfg)
 
 
 def inference_top_down_pose_model_onnx(sess,
@@ -248,7 +248,6 @@ def main(args):
                     else:
                         mmdet_results_list.append(dog_results)
                         wr2.writerow(row2)
-                    break
                 index = 0
                 len_img_list = len(img_list)
 
