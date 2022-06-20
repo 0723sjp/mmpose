@@ -49,10 +49,12 @@ def main(args):
 
     if args.image_path:
         print(args.shape)
-        sys.exit()
+
         height, width = args.shape[2:]
         one_img = Image.open(args.image_path).convert("RGB")
         one_img = one_img.resize((width, height))
+        print(one_img.size)
+        sys.exit()
         one_img = torchvision.transforms.ToTensor()(one_img)
         one_img = torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])(one_img)
     else:
