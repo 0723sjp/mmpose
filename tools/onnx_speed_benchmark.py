@@ -48,6 +48,8 @@ def main(args):
     model.cpu().eval()
 
     if args.image_path:
+        print(args.shape)
+        sys.exit()
         height, width = args.shape[2:]
         one_img = Image.open(args.image_path).convert("RGB")
         one_img = one_img.resize((width, height))
