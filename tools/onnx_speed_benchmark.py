@@ -48,18 +48,13 @@ def main(args):
     model.cpu().eval()
 
     if args.image_path:
-        print(args.shape)
-
         height, width = args.shape[2:]
         one_img = Image.open(args.image_path).convert("RGB")
         one_img = one_img.resize((width, height))
-        print(one_img.size, width, height)
 
         one_img = torchvision.transforms.ToTensor()(one_img)
-        print(one_img.shape)
         one_img = torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])(one_img)
-        print(one_img.shape)
-        sys.exit()
+        one_img = torch.unsqueeze(one_img, 0)
     else:
         one_img = torch.randn(args.shape)
 
