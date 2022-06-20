@@ -64,6 +64,8 @@ def main(args):
     # check the numerical value
     # get pytorch output
     pytorch_results = model(one_img)
+    pytorch_results = model(one_img)
+    pytorch_results = model(one_img)
     print("pytorch result")
     print(pytorch_results)
     if not isinstance(pytorch_results, (list, tuple)):
