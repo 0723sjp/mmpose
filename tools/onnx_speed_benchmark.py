@@ -5,7 +5,8 @@ import numpy as np
 import torch
 import time
 import argparse
-
+from PIL import Image
+import torchvision
 
 def _convert_batchnorm(module):
     module_output = module
@@ -46,7 +47,14 @@ def main(args):
 
     model.cpu().eval()
 
-    one_img = torch.randn(args.shape)
+    if args.image_path:
+        height, width = args.shape[2:]
+        one_img = Image.open(args.image_path).convert("RGB")
+        one_img = one_img.resize((width, height))
+        one_img = torchvision.transforms.ToTensor()(one_img)
+        one_img = torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])(one_img)
+    else:
+        one_img = torch.randn(args.shape)
 
     onnx_model = onnx.load(args.onnx_path)
     onnx.checker.check_model(onnx_model)
@@ -106,6 +114,7 @@ def parse_args():
     parser.add_argument('--config', help='test config file path')
     parser.add_argument('--checkpoint', help='checkpoint file')
     parser.add_argument('--onnx_path', type=str, default='tmp.onnx')
+    parser.add_argument('--image_path', type=str, default=None)
     parser.add_argument('--test_cnt', type=int, default=100)
     parser.add_argument(
         '--shape',
