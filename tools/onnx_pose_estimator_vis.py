@@ -17,7 +17,7 @@ def main(args):
 
     for img_path in glob.glob(os.path.join(args.image_root, "*")):
         file_name = os.path.splitext(os.path.basename(img_path))[0]
-        ori_im = Image.open(file_name).convert("RGB")
+        ori_im = Image.open(img_path).convert("RGB")
         ori_w, ori_h = ori_im.size
         for i in range(args.resize_cnt):
             target_w = round(ori_w - ((args.resize_ratio * i) * ori_w))
