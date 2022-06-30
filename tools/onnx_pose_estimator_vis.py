@@ -42,27 +42,26 @@ def main(args):
             onnx_pose_results = [onnx_pose_result]
 
             # show the results
-            if args.visualize:
-                vis_img = vis_pose_result(
-                    pose_estimator_pytorch,
-                    im_array,
-                    pose_results,
-                    kpt_score_thr=0.01,
-                    dataset=pose_estimator_pytorch.cfg.data.test.type,
-                    show=False)
+            vis_img = vis_pose_result(
+                pose_estimator_pytorch,
+                im_array,
+                pose_results,
+                kpt_score_thr=0.01,
+                dataset=pose_estimator_pytorch.cfg.data.test.type,
+                show=False)
 
-                onnx_vis_img = vis_pose_result(
-                    pose_estimator_pytorch,
-                    im_array,
-                    onnx_pose_results,
-                    kpt_score_thr=0.01,
-                    dataset=pose_estimator_pytorch.cfg.data.test.type,
-                    show=False)
+            onnx_vis_img = vis_pose_result(
+                pose_estimator_pytorch,
+                im_array,
+                onnx_pose_results,
+                kpt_score_thr=0.01,
+                dataset=pose_estimator_pytorch.cfg.data.test.type,
+                show=False)
 
-                cv2.imwrite(os.path.join(args.result_dir, file_name + "_{}x{}_pytorch.jpg".format(target_w, target_h)),
-                            vis_img)
-                cv2.imwrite(os.path.join(args.result_dir, file_name + "_{}x{}_onnx.jpg".format(target_w, target_h)),
-                            onnx_vis_img)
+            cv2.imwrite(os.path.join(args.result_dir, file_name + "_{}x{}_pytorch.jpg".format(target_w, target_h)),
+                        vis_img)
+            cv2.imwrite(os.path.join(args.result_dir, file_name + "_{}x{}_onnx.jpg".format(target_w, target_h)),
+                        onnx_vis_img)
 
 
 def parse_args():
